@@ -42,8 +42,11 @@ export default function ProductForm() {
   const fetchProduct = async () => {
     try {
       setIsLoading(true);
+      console.log('🔍 Cargando producto con ID:', id);
       const response = await api.get<{ data: Product }>(`/productos/${id}`);
       const { data } = response.data;
+      
+      console.log('📥 Producto recibido del backend:', data);
       
       if (!data) {
         alertService.error('No se encontró el producto');
@@ -51,12 +54,15 @@ export default function ProductForm() {
         return;
       }
 
-      setFormData({
+      const newFormData = {
         nombre: data.nombre || '',
         precio: data.precio || '',
         stock: data.stock || '',
         descripcion: data.descripcion || '',
-      });
+      };
+      
+      console.log('📝 FormData que se va a setear:', newFormData);
+      setFormData(newFormData);
 
       if (data.imagen_url) {
         setImagePreview(data.imagen_url);
@@ -115,6 +121,14 @@ export default function ProductForm() {
 
     setIsLoading(true);
     try {
+      // 🐛 DEBUG: Verificar datos antes de enviar
+      console.log('🔍 FormData antes de enviar:', {
+        nombre: formData.nombre,
+        precio: formData.precio,
+        stock: formData.stock,
+        descripcion: formData.descripcion
+      });
+
       const fd = new FormData();
       fd.append('nombre', formData.nombre);
       fd.append('precio', formData.precio.toString());
@@ -123,11 +137,39 @@ export default function ProductForm() {
       if (file) {
         fd.append('imagen', file);
       }
+      
+      // � FIX: Laravel no maneja PUT + FormData bien, usar POST + _method
+      if (id) {
+        fd.append('_method', 'PUT');
+      }
+
+      // �🐛 DEBUG: Verificar FormData
+      console.log('🔍 FormData entries:');
+      for (let [key, value] of fd.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       if (id) {
-        await api.put(`/productos/${id}`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // EDICIÓN: Usar JSON si no hay nueva imagen, FormData si hay imagen
+        if (file) {
+          // Con imagen nueva: usar POST + FormData + _method spoofing
+          fd.append('_method', 'PUT');
+          console.log('📤 Enviando POST (spoofed PUT) con imagen a:', `/productos/${id}`);
+          await api.post(`/productos/${id}`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        } else {
+          // Sin imagen nueva: usar PUT + JSON (más simple)
+          console.log('📤 Enviando PUT con JSON a:', `/productos/${id}`);
+          await api.put(`/productos/${id}`, {
+            nombre: formData.nombre,
+            precio: formData.precio,
+            stock: formData.stock,
+            descripcion: formData.descripcion
+          }, {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
         alertService.success('Producto actualizado correctamente');
       } else {
         await api.post('/productos', fd, {
