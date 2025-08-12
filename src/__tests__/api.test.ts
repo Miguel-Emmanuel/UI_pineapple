@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AxiosError, InternalAxiosRequestConfig, AxiosHeaders, AxiosResponse } from 'axios';
-import { AxiosInstance } from 'axios';
 
 // Mock localStorage
 const localStorageMock = {
@@ -34,7 +33,6 @@ vi.mock('axios', async () => {
 });
 
 describe('API Service', () => {
-  let api: AxiosInstance;
   let requestCallback: ((config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig);
   let responseCallback: ((response: AxiosResponse) => AxiosResponse);
   let errorCallback: ((error: AxiosError) => Promise<never>);
@@ -63,7 +61,7 @@ describe('API Service', () => {
     });
 
     // Importar api después de configurar los mocks
-    api = (await import('../services/api')).default;
+    await import('../services/api');
   });
 
   describe('Request Interceptor', () => {
