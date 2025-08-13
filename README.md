@@ -60,7 +60,7 @@ Pineapple es una aplicación web moderna desarrollada con React y TypeScript que
 3. **Configurar variables de entorno**
    Crear un archivo `.env` en la raíz del proyecto:
    ```env
-   VITE_API_URL=http://localhost:8000/api
+   VITE_API_URL=https://api-pineapple.onrender.com/api
    ```
 
 4. **Iniciar el servidor de desarrollo**
